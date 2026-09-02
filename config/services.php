@@ -37,7 +37,6 @@ return [
     'jembatan_antrean' => [
         'token' => env('BRIDGE_ANTREAN_TOKEN'),
     ],
-	],
 	'mesin_antrean' => [
 		'mode' => env('MODE_PANGGILAN_ANTREAN', 'jembatan'),
 		'url' => env('MESIN_ANTREAN_URL'),
