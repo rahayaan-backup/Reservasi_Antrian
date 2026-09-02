@@ -133,10 +133,3 @@ Route::prefix('system')->name('system.')->group(function () {
     Route::get('/error-demo', [ErrorDemoController::class, 'index'])->name('error-demo');
 });
 
-Route::middleware('verifikasi.token-jembatan')->prefix('panggilan')->group(function () {
-    Route::get('/pending', [PanggilanAntreanController::class, 'pending']);
-    Route::post('/{panggilan}/selesai', [PanggilanAntreanController::class, 'tandaiSelesai']);
-    Route::post('/{panggilan}/gagal', [PanggilanAntreanController::class, 'tandaiGagal']);
-    Route::post('/heartbeat', [PanggilanAntreanController::class, 'heartbeat']);
-    Route::post('/counter-mesin', [PanggilanAntreanController::class, 'counterMesin']); // ★ baru
-});
