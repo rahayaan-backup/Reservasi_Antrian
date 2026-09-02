@@ -402,7 +402,7 @@ if (window.notifikasiReservasiConfig) {
                 <p class="mt-0.5 truncate text-sm text-pln-slate-700">
                     <span class="font-mono font-semibold">${reservasi.nomor_antrean}</span> &middot; ${reservasi.nama}
                 </p>
-                <p class="text-xs text-pln-slate-400">${reservasi.layanan} &middot; ${reservasi.dibuat_pada} WIB</p>
+                <p class="text-xs text-pln-slate-400">${reservasi.layanan} &middot; ${reservasi.dibuat_pada} WITA</p>
             </div>
         `;
 
