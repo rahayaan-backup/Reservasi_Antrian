@@ -5,13 +5,17 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\PanggilanAntrean;
 use App\Services\PanggilanAntreanService;
+use App\Services\SinkronisasiCounterMesinService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class PanggilanAntreanController extends Controller
 {
-    public function __construct(private readonly PanggilanAntreanService $panggilanService)
-    {
+    public function __construct(
+        private readonly PanggilanAntreanService $panggilanService,
+        private readonly SinkronisasiCounterMesinService $sinkronisasiService,
+    ) {
     }
 
     /**
@@ -64,5 +68,39 @@ class PanggilanAntreanController extends Controller
             'success' => true,
             'message' => 'Job ditandai gagal.',
         ]);
+    }
+
+    /**
+     * Dipanggil laptop jembatan di SETIAP siklus polling (bahkan saat tidak
+     * ada job), sebagai tanda "saya masih hidup". Disimpan di cache dengan
+     * TTL singkat — kalau bridge mati, nilai ini otomatis kedaluwarsa tanpa
+     * perlu proses pembersihan terpisah. Dipakai untuk badge status
+     * "Mesin Antrean: Online/Offline" di dashboard CS.
+     */
+    public function heartbeat(): JsonResponse
+    {
+        Cache::put('jembatan_antrean_terakhir_terlihat', now(), now()->addSeconds(30));
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
+     * Dipanggil laptop jembatan setiap siklus polling, membawa hasil baca
+     * "Total Antrian" langsung dari halaman status mesin fisik. Karena
+     * Laravel di Railway tidak bisa menjangkau IP lokal mesin (192.168.4.x)
+     * secara langsung, laptop jembatan yang membaca lalu "menitipkan"
+     * datanya ke sini — dipakai untuk menjaga NomorAntreanCounter tetap
+     * sinkron dengan kondisi mesin fisik yang sebenarnya (lihat
+     * SinkronisasiCounterMesinService::simpanLaporanCounterDariJembatan()).
+     *
+     * Payload yang diharapkan: { "counter": { "A": 14, "B": 3, "C": null } }
+     */
+    public function counterMesin(Request $request): JsonResponse
+    {
+        $this->sinkronisasiService->simpanLaporanCounterDariJembatan(
+            $request->input('counter', [])
+        );
+
+        return response()->json(['success' => true]);
     }
 }
