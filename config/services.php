@@ -34,8 +34,9 @@ return [
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
-	'jembatan_antrean' => [
-    'token' => env('hk5YBW0O8iw7q9ZoAS69YDkOwOoc1bZDgILBxbcG'),
+    'jembatan_antrean' => [
+        'token' => env('BRIDGE_ANTREAN_TOKEN'),
+    ],
 	],
 	'mesin_antrean' => [
 		'mode' => env('MODE_PANGGILAN_ANTREAN', 'jembatan'),
