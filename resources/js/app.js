@@ -304,10 +304,22 @@ if (window.notifikasiReservasiConfig) {
 		indikator?.classList.add('hidden');
 	}
 
-	['click', 'keydown', 'touchstart'].forEach((eventName) => {
-		document.addEventListener(eventName, siapkanAudioContext, { once: true });
-	});
-
+    ['click', 'keydown', 'touchstart'].forEach((eventName) => {
+        document.addEventListener(eventName, siapkanAudioContext, { once: true });
+    });
+    
+    /**
+     * Browser menahan (throttle) AudioContext di tab yang sedang tidak aktif
+     * / di-minimize, sebagai bagian dari kebijakan hemat daya. Begitu CS
+     * kembali ke tab ini, pastikan context "dibangunkan" lagi supaya siap
+     * memutar suara saat notifikasi berikutnya datang — tanpa ini, suara
+     * akan tetap diam meski badge & toast tetap muncul normal.
+     */
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible' && audioContext?.state === 'suspended') {
+            audioContext.resume();
+        }
+    });
     /**
      * Bunyikan nada "ding-dong" dua nada sederhana menggunakan oscillator,
      * tanpa perlu file .mp3/.wav apa pun.
