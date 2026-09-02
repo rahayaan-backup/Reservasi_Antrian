@@ -2,6 +2,9 @@
 
 namespace App\Services;
 
+use App\Models\Layanan;
+use App\Models\NomorAntreanCounter;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -18,6 +21,14 @@ class SinkronisasiCounterMesinService
      * — pemanggil wajib menangani null dengan fallback ke counter internal
      * (NomorAntreanCounter, Sprint 2) supaya sistem tetap jalan meski
      * mesin fisik sedang tidak terjangkau.
+     *
+     * Method ini HANYA berfungsi pada mode "langsung" (Laravel & mesin di
+     * jaringan yang sama). Pada mode "jembatan" (produksi/Railway), method
+     * ini selalu mengembalikan null karena Laravel secara fisik tidak bisa
+     * menjangkau IP lokal mesin (192.168.4.x) dari internet — sinkronisasi
+     * pada mode "jembatan" dilakukan lewat method
+     * simpanLaporanCounterDariJembatan() di bawah, yang dipanggil dari
+     * laporan berkala laptop jembatan.
      */
     public function ambilTotalAntreanSaatIni(string $kodeLayanan): ?int
     {
@@ -67,5 +78,66 @@ class SinkronisasiCounterMesinService
         }
 
         return null;
+    }
+
+    /**
+     * Terima laporan "Total Antrian" dari laptop jembatan (dipakai pada
+     * mode "jembatan", produksi/Railway). Karena Laravel di cloud tidak
+     * bisa mengakses IP lokal mesin secara langsung, laptop jembatan yang
+     * membaca halaman status mesin (dengan parsing HTML yang identik
+     * dengan parseTotalAntreanDariHtml() di atas, dijalankan versi
+     * JavaScript-nya di bridge.js), lalu "menitipkan" hasilnya ke sini
+     * lewat endpoint API secara berkala (setiap siklus polling).
+     *
+     * Counter internal (NomorAntreanCounter) HANYA dimajukan kalau angka
+     * dari mesin LEBIH BESAR dari yang tersimpan saat ini — supaya nomor
+     * tidak pernah mundur akibat laporan yang telat/basi, dan supaya
+     * perilakunya konsisten dengan logika yang sama persis dipakai pada
+     * mode "langsung" di ReservasiService::generateNomorAntrean().
+     *
+     * @param  array<string, int|null>  $counterPerLayanan  Contoh: ['A' => 14, 'B' => 3, 'C' => null]
+     */
+    public function simpanLaporanCounterDariJembatan(array $counterPerLayanan): void
+    {
+        $tanggalHariIni = now()->toDateString();
+
+        foreach ($counterPerLayanan as $kodeLayanan => $totalDariMesin) {
+            if ($totalDariMesin === null || $totalDariMesin === '') {
+                continue;
+            }
+
+            $totalDariMesin = (int) $totalDariMesin;
+
+            $layanan = Layanan::query()
+                ->where('kode_layanan', strtoupper($kodeLayanan))
+                ->first();
+
+            if (! $layanan) {
+                Log::warning("Laporan counter mesin: kode layanan '{$kodeLayanan}' tidak dikenali, dilewati.");
+                continue;
+            }
+
+            DB::transaction(function () use ($layanan, $tanggalHariIni, $totalDariMesin) {
+                $counter = NomorAntreanCounter::query()
+                    ->where('layanan_id', $layanan->id)
+                    ->where('tanggal', $tanggalHariIni)
+                    ->lockForUpdate()
+                    ->first();
+
+                if (! $counter) {
+                    NomorAntreanCounter::create([
+                        'layanan_id' => $layanan->id,
+                        'tanggal' => $tanggalHariIni,
+                        'urutan_terakhir' => $totalDariMesin,
+                    ]);
+
+                    return;
+                }
+
+                if ($totalDariMesin > $counter->urutan_terakhir) {
+                    $counter->update(['urutan_terakhir' => $totalDariMesin]);
+                }
+            });
+        }
     }
 }
