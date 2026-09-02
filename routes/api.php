@@ -14,9 +14,11 @@ use Illuminate\Support\Facades\Route;
 | bukan sesi login Admin/CS, karena pemanggilnya bukan browser.
 |
 */
-
 Route::middleware('verifikasi.token-jembatan')->prefix('panggilan')->group(function () {
     Route::get('/pending', [PanggilanAntreanController::class, 'pending']);
     Route::post('/{panggilan}/selesai', [PanggilanAntreanController::class, 'tandaiSelesai']);
     Route::post('/{panggilan}/gagal', [PanggilanAntreanController::class, 'tandaiGagal']);
+    Route::post('/heartbeat', [PanggilanAntreanController::class, 'heartbeat']);
+    Route::post('/counter-mesin', [PanggilanAntreanController::class, 'counterMesin']); // ★ baru
 });
+
