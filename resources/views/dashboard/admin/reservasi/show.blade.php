@@ -39,7 +39,7 @@
                 </div>
 
                 <div class="flex shrink-0 gap-3">
-                    
+                    <a
                         href="{{ route('admin.reservasi.export', ['status' => $reservasi->status->value]) }}"
                         class="inline-flex items-center gap-2 rounded-lg border border-pln-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-pln-navy-800 transition hover:bg-pln-slate-50"
                     >
