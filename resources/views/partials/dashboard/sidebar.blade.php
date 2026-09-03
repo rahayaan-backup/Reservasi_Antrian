@@ -292,7 +292,7 @@
             <p class="mt-1 text-xs leading-relaxed text-pln-slate-500">
                 Hubungi Contact Center PLN 123.
             </p>
-            
+            <a
                 href="tel:123"
                 class="mt-3 flex items-center justify-center gap-2 rounded-lg bg-pln-navy-900 px-3 py-2 text-xs font-semibold text-white transition hover:bg-pln-navy-800"
             >
