@@ -74,6 +74,7 @@ Route::prefix('admin')->name('admin.')->middleware('auth:admin')->group(function
 
     Route::get('reservasi/export', [AdminReservasiController::class, 'export'])->name('reservasi.export');
     Route::get('reservasi', [AdminReservasiController::class, 'index'])->name('reservasi.index');
+    Route::get('reservasi/{reservasi}', [AdminReservasiController::class, 'show'])->name('reservasi.show');
 
     Route::get('kalender-jadwal', [AdminKalenderController::class, 'index'])->name('kalender.index');
 
