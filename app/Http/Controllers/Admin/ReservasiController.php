@@ -6,6 +6,7 @@ use App\Enums\ReservasiStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Layanan;
 use App\Services\ReservasiQueryService;
+use App\Models\Reservasi;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -46,6 +47,24 @@ class ReservasiController extends Controller
         ]);
     }
 
+    /**
+     * Tampilkan detail satu reservasi untuk keperluan monitoring Admin.
+     * Read-only — tidak ada form ubah status/catatan seperti di sisi CS,
+     * sesuai batasan wewenang Admin (lihat komentar index() di atas).
+     */
+    public function show(Reservasi $reservasi): View
+    {
+        $reservasi->load([
+            'layanan:id,nama_layanan,kode_layanan',
+            'jadwal:id,tanggal,jam_mulai,jam_selesai',
+            'dokumen:id,reservasi_id,nama_file_asli,mime_type,ukuran_file,created_at',
+            'statusHistories' => fn ($query) => $query->oldest('changed_at')->with('petugas:id,nama_petugas'),
+            'notes' => fn ($query) => $query->latest()->with('petugas:id,nama_petugas'),
+        ]);
+
+        return view('dashboard.admin.reservasi.show', compact('reservasi'));
+    }
+    
     /**
      * Ekspor seluruh reservasi (mengikuti filter yang sedang aktif) ke CSV.
      */
