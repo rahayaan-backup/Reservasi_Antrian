@@ -1,5 +1,4 @@
 @props(['reservasi'])
-
 @php
     $ikonLayanan = match ($reservasi->layanan->kode_layanan) {
         'A' => 'bolt',
@@ -7,10 +6,15 @@
         default => 'wrench-screwdriver',
     };
 
-    $adaRouteDetail = Route::has('cs.reservasi.show');
+    // Komponen ini dipakai bersama oleh halaman Admin & CS — link "Lihat
+    // Detail" harus menyesuaikan konteks yang sedang aktif, bukan
+    // hardcode ke satu route saja, supaya masing-masing area mengarah ke
+    // halaman detail miliknya sendiri (dengan guard middleware yang benar).
+    $routeDetail = request()->routeIs('admin.*') ? 'admin.reservasi.show' : 'cs.reservasi.show';
+    $adaRouteDetail = Route::has($routeDetail);
+
     $petugas = $reservasi->statusHistories->first()?->petugas?->nama_petugas;
 @endphp
-
 <tr class="border-b border-pln-slate-100 last:border-0">
     <td class="whitespace-nowrap px-4 py-3 font-mono text-sm font-semibold text-pln-navy-900">
         {{ $reservasi->nomor_antrean }}
@@ -42,11 +46,11 @@
     </td>
     <td class="whitespace-nowrap px-4 py-3 text-right">
         @if ($adaRouteDetail)
-            <a href="{{ route('cs.reservasi.show', $reservasi) }}" class="text-sm font-semibold text-pln-navy-700 hover:text-pln-navy-900">
+            <a href="{{ route($routeDetail, $reservasi) }}" class="text-sm font-semibold text-pln-navy-700 hover:text-pln-navy-900">
                 Lihat Detail
             </a>
         @else
-            <span class="text-sm font-semibold text-pln-slate-300" title="Halaman Detail Reservasi CS akan tersedia pada sprint berikutnya">
+            <span class="text-sm font-semibold text-pln-slate-300" title="Halaman Detail Reservasi akan tersedia pada sprint berikutnya">
                 Lihat Detail
             </span>
         @endif
