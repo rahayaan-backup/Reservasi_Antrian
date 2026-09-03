@@ -13,6 +13,42 @@
             ->where('status_sinkron_fisik', \App\Enums\StatusSinkronFisik::BelumDisinkronkan)
             ->where('status', \App\Enums\ReservasiStatus::PerluDatang)
             ->count();
+
+        // Menu sidebar Reservasi menyaring berdasarkan kombinasi query
+        // string "tab" + "status" — setiap item harus dicek presisi
+        // kombinasinya, bukan cuma prefix route, supaya highlight biru
+        // tepat sasaran (satu item aktif dalam satu waktu).
+        $tabAktifSaatIni = request()->query('tab', 'aktif');
+        $statusAktifSaatIni = request()->query('status', '');
+        $diHalamanDaftarReservasi = request()->routeIs('cs.reservasi.index');
+
+        $isDaftarReservasiAktif = $diHalamanDaftarReservasi
+            && $tabAktifSaatIni === 'aktif'
+            && $statusAktifSaatIni === '';
+
+        $isMenungguReviewAktif = $diHalamanDaftarReservasi
+            && $tabAktifSaatIni === 'aktif'
+            && $statusAktifSaatIni === 'menunggu_review';
+
+        $isPerluDatangAktif = $diHalamanDaftarReservasi
+            && $tabAktifSaatIni === 'aktif'
+            && $statusAktifSaatIni === 'perlu_datang';
+
+        $isSelesaiOnlineAktif = $diHalamanDaftarReservasi
+            && $tabAktifSaatIni === 'riwayat'
+            && $statusAktifSaatIni === 'selesai_online';
+
+        $isSelesaiAktif = $diHalamanDaftarReservasi
+            && $tabAktifSaatIni === 'riwayat'
+            && $statusAktifSaatIni === 'selesai';
+
+        $isDibatalkanAktif = $diHalamanDaftarReservasi
+            && $tabAktifSaatIni === 'riwayat'
+            && $statusAktifSaatIni === 'dibatalkan';
+
+        $isRiwayatReservasiAktif = $diHalamanDaftarReservasi
+            && $tabAktifSaatIni === 'riwayat'
+            && $statusAktifSaatIni === '';
     }
 @endphp
 
@@ -141,7 +177,7 @@
                 <x-dashboard.nav-item
                     :href="route('cs.reservasi.index')"
                     icon="clipboard-list"
-                    :active="request()->routeIs('cs.reservasi.*') && request()->query('tab', 'aktif') !== 'menunggu_review_link'"
+                    :active="$isDaftarReservasiAktif"
                 >
                     Daftar Reservasi
                 </x-dashboard.nav-item>
@@ -149,6 +185,7 @@
                 <x-dashboard.nav-item
                     :href="route('cs.reservasi.index', ['tab' => 'aktif', 'status' => 'menunggu_review'])"
                     icon="clock"
+                    :active="$isMenungguReviewAktif"
                     :badge="$badgeStatusCs['menunggu_review'] ?? 0"
                 >
                     Menunggu Review
@@ -157,6 +194,7 @@
                 <x-dashboard.nav-item
                     :href="route('cs.reservasi.index', ['tab' => 'aktif', 'status' => 'perlu_datang'])"
                     icon="walking"
+                    :active="$isPerluDatangAktif"
                     :badge="$badgeStatusCs['perlu_datang'] ?? 0"
                 >
                     Perlu Datang
@@ -174,6 +212,7 @@
                 <x-dashboard.nav-item
                     :href="route('cs.reservasi.index', ['tab' => 'riwayat', 'status' => 'selesai_online'])"
                     icon="check"
+                    :active="$isSelesaiOnlineAktif"
                     :badge="$badgeStatusCs['selesai_online'] ?? 0"
                 >
                     Selesai Online
@@ -182,6 +221,7 @@
                 <x-dashboard.nav-item
                     :href="route('cs.reservasi.index', ['tab' => 'riwayat', 'status' => 'selesai'])"
                     icon="check-circle"
+                    :active="$isSelesaiAktif"
                     :badge="$badgeStatusCs['selesai'] ?? 0"
                 >
                     Selesai
@@ -190,6 +230,7 @@
                 <x-dashboard.nav-item
                     :href="route('cs.reservasi.index', ['tab' => 'riwayat', 'status' => 'dibatalkan'])"
                     icon="x-mark"
+                    :active="$isDibatalkanAktif"
                     :badge="$badgeStatusCs['dibatalkan'] ?? 0"
                 >
                     Dibatalkan
@@ -208,7 +249,7 @@
 				<x-dashboard.nav-item
 					:href="route('cs.reservasi.index', ['tab' => 'riwayat'])"
 					icon="clipboard-list"
-					:active="request()->routeIs('cs.reservasi.*') && request()->query('tab') === 'riwayat'"
+					:active="$isRiwayatReservasiAktif"
 				>
 					Riwayat Reservasi
 				</x-dashboard.nav-item>
@@ -251,7 +292,7 @@
             <p class="mt-1 text-xs leading-relaxed text-pln-slate-500">
                 Hubungi Contact Center PLN 123.
             </p>
-            <a
+            
                 href="tel:123"
                 class="mt-3 flex items-center justify-center gap-2 rounded-lg bg-pln-navy-900 px-3 py-2 text-xs font-semibold text-white transition hover:bg-pln-navy-800"
             >
